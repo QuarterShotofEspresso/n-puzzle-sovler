@@ -64,29 +64,29 @@ impl Game {
     pub fn find_tile_by_value(&self, target: i32) -> (usize, usize) {
         // Given a game state, return the index at where a value is
         for (i, row) in self.data.iter().enumerate() {
-            for (j, &tile) in row.iter().enumerate() {
-                if tile == target {
+            for (j, tile) in row.iter().enumerate() {
+                if *tile == target {
                     return (i, j);
                 }
             }
         }
 
-        println!("Could not find index for cell {}", target);
+        println!("Could not find index for cell {}", &target);
         return (0, 0);
     }
 
     pub fn swap_tiles(&self, tile_a: &(usize, usize), tile_b: &(usize, usize)) -> Game {
         // create a new Game instance with respective tiles swapped
         let mut new_game_data = [[-1; N]; N];
-        for (i, row) in self.data.iter().enumerate() {
-            for (j, cell) in row.iter().enumerate() {
+        for (i, row) in new_game_data.iter_mut().enumerate() {
+            for (j, tile) in row.iter_mut().enumerate() {
                 // if we're at the index as that of tile A
                 if (i, j) == *tile_a {
-                    new_game_data[i][j] = self.data[tile_a.0][tile_a.1];
+                    *tile = self.data[tile_b.0][tile_b.1];
                 } else if (i, j) == *tile_b {
-                    new_game_data[i][j] = self.data[tile_b.0][tile_b.1];
+                    *tile = self.data[tile_a.0][tile_a.1];
                 } else {
-                    new_game_data[i][j] = self.data[i][j];
+                    *tile = self.data[i][j];
                 }
             }
         }
@@ -94,10 +94,10 @@ impl Game {
         Game {data: new_game_data, dist: -1}
     }
 
-    pub fn move_empty(&self, tile_a: &(usize, usize)) -> Game {
+    pub fn move_empty_tile(&self, tile_a: &(usize, usize)) -> Game {
         let empty_tile = self.find_tile_by_value(0);
         let mut new_game = self.swap_tiles(&empty_tile, &tile_a);
-        new_game.find_distance(Heuristic::UniformCost);
+        new_game.find_distance(Heuristic::MisplacedTile);
         new_game
     }
 
@@ -105,8 +105,29 @@ impl Game {
         // take the current Game instance and return its distance to
         // the goal state
         self.dist = match heuristic {
-            Heuristic::Manhattan => 0, // TODO: Implement manhattan heursitic
-            Heuristic::MisplacedTile => 0, // TODO: Implement misplaced heuristic
+            Heuristic::Manhattan => { // TODO: Implement manhattan heursitic
+                0
+            },
+            Heuristic::MisplacedTile => { // TODO: Implement misplaced heuristic
+                let mut expected_tile = 1;
+                let mut dist = -1; // Start at -1 because final element will by default be wrong 
+
+                for row in self.data {
+                    for tile in row {
+                        if tile != expected_tile {
+                            dist += 1;
+                            //println!("(ex) {} != {} => dis: {}", &expected_tile, &tile, &dist)
+                        }
+                        expected_tile += 1;
+                    }
+                }
+
+                if self.data[N-1][N-1] != 0 {
+                    dist += 1;
+                }
+
+                dist
+            },
             Heuristic::UniformCost => 0
         };
 
@@ -115,11 +136,9 @@ impl Game {
 
     pub fn print_game(&self) {
         // Print the game state
-        for row in self.data.iter() {
-            for tile in row.iter() {
-                print!("{} ", tile);
-            }
-            println!();
+        println!("\nDistance: {}", self.dist);
+        for row in self.data {
+            println!("{:?}", row);
         }
         println!();
     }
