@@ -1,5 +1,12 @@
 use std::vec::Vec;
 
+pub enum Heuristic {
+    UniformCost,
+    Manhattan,
+    MisplacedTile,
+}
+
+const HEURISTIC: Heuristic = Heuristic::Manhattan;
 const N: usize = 3;
 
 pub struct NPuzzle {
@@ -8,19 +15,26 @@ pub struct NPuzzle {
 
 impl NPuzzle {
 
-    pub fn new() -> Self {
+    pub fn new(data_to_map: &[i32]) -> Self {
         
+        if data_to_map.len() != (N * N) {
+            panic!("Can't map the provided data!");
+        }
+
         let mut new_game_data = [[0; N]; N];
-        let mut value = 1;
+        //let mut value = 1;
+        let mut data_map_idx = 0;
 
         for i in 0..N {
             for j in 0..N {
-                new_game_data[i][j] = value;
-                value += 1;
+                //new_game_data[i][j] = value;
+                new_game_data[i][j] = data_to_map[data_map_idx];
+                data_map_idx += 1;
+                //value += 1;
             }
         }
 
-        new_game_data[N-1][N-1] = 0;
+        //new_game_data[N-1][N-1] = 0;
 
         NPuzzle {data: new_game_data}
     }
@@ -99,6 +113,125 @@ impl NPuzzle {
         for row in self.data {
             println!("{:?}", row);
         }
+    }
+
+    pub fn calc_heuristic(&self) -> i32 {
+        // take the current NPuzzle instance and return its distance to
+        // the goal state
+        match HEURISTIC {
+            Heuristic::Manhattan => {
+                let mut expected_index = (0, 0);
+                let mut expected_tile  = 1;
+                let mut heur = 0;
+
+                for row in self.data {
+                    for tile in row {
+                        //println!("{} (tile) != {} (expec)", tile, expected_tile);
+                        if expected_tile != 0 && tile != expected_tile {
+                        //if tile != expected_tile {
+                            let index_actual = self.find_tile_by_value(expected_tile);
+                            let x_delta = (index_actual.0 as i32 - expected_index.0 as i32).abs();
+                            //println!("{} (act) - {} (exp) = {} (x)", index_actual.0, expected_index.0, x_delta);
+                            let y_delta = (index_actual.1 as i32 - expected_index.1 as i32).abs();
+                            //println!("{} (act) - {} (exp) = {} (y)", index_actual.1, expected_index.1, y_delta);
+                            heur += x_delta + y_delta;
+                            //println!("heur: {}", heur);
+                        }
+                        expected_index.1 = (expected_index.1 + 1) % self.data.len();
+                        expected_tile    = (expected_tile + 1)    % (self.data.len() * self.data.len()) as i32;
+                    }
+                    expected_index.0 += 1;
+                }
+                heur
+            },
+            Heuristic::MisplacedTile => {
+                let mut expected_tile = 1;
+                let mut heur = -1; // Start at -1 because final element will by default be wrong 
+
+                for row in self.data {
+                    for tile in row {
+                        if tile != expected_tile {
+                            heur += 1;
+                        }
+                        expected_tile += 1;
+                    }
+                }
+                heur
+            },
+            Heuristic::UniformCost => 0,
+        }
+    }
+}
+
+pub struct Node {
+    state: NPuzzle,
+    dist: i32,
+    cost: i32,
+}
+
+impl Node {
+
+    // Transform a node into a game
+    pub fn new(target_game: NPuzzle, dist: i32) -> Self {
+        //target_game.print();
+        let cost = target_game.calc_heuristic() + dist.clone();
+        Node {
+            state: target_game,
+            dist: dist.clone(),
+            cost: cost, 
+        }
+    }
+
+
+    // Take the current node and expand it by
+    // considering all its operations
+    // and generating new nodes for each instance
+    pub fn expand_node(&self) -> Vec<Node> {
+        let mut new_nodes: Vec<Node> = Vec::new();
+        let valid_moves = self.state.valid_moves();
+        for valid_move in &valid_moves {
+            let new_game = self.state.move_empty_tile(valid_move);
+            new_nodes.push(Node::new(new_game, self.dist + 1));
+        }
+
+        new_nodes
+    }
+
+    // Take a node and solve the puzzle from its current state
+    pub fn solve(self) -> Option<Node> {
+        let mut queue: Vec<Node> = Vec::new();
+        let mut total_nodes_visited: u32 = 0;
+        queue.push(self);
+        while !queue.is_empty() {
+            // find the node with the lowest cost
+            let min_idx = queue.iter()
+                .enumerate()
+                .min_by_key(|(_, s)| s.cost)
+                .map(|(i, _)| i)
+                .expect("Couldn't find a node with the lowest cost");
+            // collect that node
+            let selected_node = queue.swap_remove(min_idx);
+            selected_node.print();
+            total_nodes_visited += 1;
+            // If the cost of the current node is 0
+            if (selected_node.cost - selected_node.dist) == 0 {
+                // It is the goal node
+                println!("Found the goal state!\nTotal nodes visited: {}", total_nodes_visited);
+                return Some(selected_node); // so return the goal node
+            }
+            // otherwise expand the node and push the children onto the queue
+            queue.append(&mut selected_node.expand_node());
+        }
+
+        println!("No solution found!");
+        None
+    }
+
+    pub fn print(&self) {
+        self.state.print();
+        println!("Dist: {}", self.dist);
+        println!("Heur: {}", self.cost - self.dist);
+        println!("Cost: {}", self.cost);
         println!();
     }
 }
