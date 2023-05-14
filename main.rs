@@ -4,13 +4,16 @@ use game::*;
 
 fn main() {
     // FormatL game_<DEPTH>
+    let game_0  = [1, 2, 3, 4, 5, 6, 7, 8, 0];
+    let game_2  = [1, 2, 3, 4, 5, 6, 0, 7, 8];
+    let game_4  = [1, 2, 3, 5, 0, 6, 4, 7, 8];
     let game_8  = [1, 3, 6, 5, 0, 2, 4, 7, 8];
     let game_12 = [1, 3, 6, 5, 0, 7, 4, 8, 2];
     let game_16 = [1, 6, 7, 5, 0, 3, 4, 8, 2];
     let game_20 = [7, 1, 2, 4, 8, 5, 6, 3, 0];
     let game_24 = [0, 7, 2, 4, 6, 1, 3, 5, 8];
 
-    let my_game = NPuzzle::new(&game_20);
+    let my_game = NPuzzle::new(&game_12);
     let new_node = Node::new(my_game, 0);
     println!("Initialized Puzzle:");
     new_node.print();

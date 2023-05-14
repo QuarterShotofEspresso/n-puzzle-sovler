@@ -6,7 +6,7 @@ pub enum Heuristic {
     MisplacedTile,
 }
 
-const HEURISTIC: Heuristic = Heuristic::Manhattan;
+const HEURISTIC: Heuristic = Heuristic::UniformCost;
 const N: usize = 3;
 
 pub struct NPuzzle {
@@ -158,7 +158,18 @@ impl NPuzzle {
                 }
                 heur
             },
-            Heuristic::UniformCost => 0,
+            Heuristic::UniformCost => {
+                let mut expected_tile = 1;
+                for row in self.data {
+                    for tile in row {
+                        if tile != expected_tile {
+                            return 1;
+                        }
+                        expected_tile = (expected_tile + 1) % (self.data.len() * self.data.len()) as i32;
+                    }
+                }
+                return 0;
+            },
         }
     }
 }
