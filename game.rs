@@ -3,7 +3,7 @@ use std::vec::Vec;
 const N: usize = 3;
 
 pub struct NPuzzle {
-    data: [[i32; N]; N],
+    pub data: [[i32; N]; N],
 }
 
 impl NPuzzle {

@@ -1,6 +1,6 @@
-mod game;
+//mod game;
 
-//use game::NPuzzle;
+//use crate::game::NPuzzle::*;
 
 pub enum Heuristic {
     UniformCost,
@@ -8,7 +8,7 @@ pub enum Heuristic {
     MisplacedTile,
 }
 
-pub fn calc_heuristic(target_game: &game::NPuzzle,
+pub fn calc_heuristic(target_game: &NPuzzle,
         heuristic: Heuristic) -> i32 {
     // take the current NPuzzle instance and return its distance to
     // the goal state
