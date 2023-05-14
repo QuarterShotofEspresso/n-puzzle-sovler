@@ -2,13 +2,13 @@ use std::vec::Vec;
 
 const N: usize = 3;
 
-pub struct Game {
+pub struct NPuzzle {
     data: [[i32; N]; N],
 }
 
-impl Game {
+impl NPuzzle {
 
-    pub fn make_game() -> Game {
+    pub fn new() -> Self {
         
         let mut new_game_data = [[0; N]; N];
         let mut value = 1;
@@ -22,7 +22,7 @@ impl Game {
 
         new_game_data[N-1][N-1] = 0;
 
-        Game {data: new_game_data, dist: 0}
+        NPuzzle {data: new_game_data}
     }
 
     pub fn valid_moves(&self) -> Vec<(usize, usize)> {
@@ -69,8 +69,8 @@ impl Game {
         return (0, 0);
     }
 
-    pub fn swap_tiles(&self, tile_a: &(usize, usize), tile_b: &(usize, usize)) -> Game {
-        // create a new Game instance with respective tiles swapped
+    pub fn swap_tiles(&self, tile_a: &(usize, usize), tile_b: &(usize, usize)) -> NPuzzle {
+        // create a new NPuzzle instance with respective tiles swapped
         let mut new_game_data = [[-1; N]; N];
         for (i, row) in new_game_data.iter_mut().enumerate() {
             for (j, tile) in row.iter_mut().enumerate() {
@@ -85,17 +85,16 @@ impl Game {
             }
         }
 
-        Game {data: new_game_data, dist: -1}
+        NPuzzle {data: new_game_data}
     }
 
-    pub fn move_empty_tile(&self, tile_a: &(usize, usize)) -> Game {
+    pub fn move_empty_tile(&self, tile_a: &(usize, usize)) -> NPuzzle {
         let empty_tile = self.find_tile_by_value(0);
-        let mut new_game = self.swap_tiles(&empty_tile, &tile_a);
-        //new_game.find_distance(Heuristic::MisplacedTile);
+        let new_game = self.swap_tiles(&empty_tile, &tile_a);
         new_game
     }
 
-    pub fn print_game(&self) {
+    pub fn print(&self) {
         // Print the game state
         for row in self.data {
             println!("{:?}", row);

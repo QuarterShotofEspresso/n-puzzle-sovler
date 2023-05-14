@@ -1,14 +1,16 @@
 mod game;
 
+//use game::NPuzzle;
+
 pub enum Heuristic {
     UniformCost,
     Manhattan,
-    MisplacedTile
+    MisplacedTile,
 }
 
-pub fn calc_heuristic(target_game: &game::Game,
+pub fn calc_heuristic(target_game: &game::NPuzzle,
         heuristic: Heuristic) -> i32 {
-    // take the current Game instance and return its distance to
+    // take the current NPuzzle instance and return its distance to
     // the goal state
     match heuristic {
         Heuristic::Manhattan => {
@@ -16,10 +18,10 @@ pub fn calc_heuristic(target_game: &game::Game,
             let mut expected_tile  = 1;
             let mut heur = 0;
 
-            for row in self.state.data {
+            for row in target_game.state.data {
                 for tile in row {
                     if tile != expected_tile {
-                        let index_actual = self.data.get_tile_by_value(tile);
+                        let index_actual = target_game.data.get_tile_by_value(tile);
                         heur += (index_actual.0 - expected_index.0).abs() +
                             (index_actual.1 - expected_index.1).abs();
                     }
@@ -31,7 +33,7 @@ pub fn calc_heuristic(target_game: &game::Game,
             let mut expected_tile = 1;
             let mut heur = -1; // Start at -1 because final element will by default be wrong 
 
-            for row in self.data {
+            for row in target_game.data {
                 for tile in row {
                     if tile != expected_tile {
                         heur += 1;
@@ -46,7 +48,7 @@ pub fn calc_heuristic(target_game: &game::Game,
 }
 
 pub struct Node {
-    state: Option<game::Game>,
+    state: Option<game::NPuzzle>,
     dist: i32,
     cost: i32,
 }
@@ -54,13 +56,14 @@ pub struct Node {
 impl Node {
 
     // Transform a node into a game
-    pub fn create_node_from_game(target_game: game::Game,
-            dist_of_parent_node: i32) -> Node {
+    pub fn new(target_game: game::NPuzzle,
+            dist_of_parent_node: i32) -> Self {
         Node {
-            data: Some(target_game),
+            state: Some(target_game),
             dist: dist_of_parent_node.clone() + 1,
-            cost: calc_heuristic(target_game, 
-                heuristic::UniformCost) + dist_of_parent_node.clone() + 1,
+            cost: calc_heuristic(
+                target_game, Heuristic::UniformCost) +
+                dist_of_parent_node.clone() + 1,
         }
     }
 
@@ -81,6 +84,7 @@ impl Node {
         new_nodes
     }
 
+    /*
     // Take a node and solve the puzzle from its current state
     pub fn solve(&self) -> Option<Node> {
         let mut queue: Vec<Node> = Vec::new();
@@ -89,6 +93,8 @@ impl Node {
             // find the node with the lowest cost
             let mut selected_node: &Node = queue.iter().fold(
                 starting_node, |min, x| if x.cost < min.cost {x} else {min});
+            let mut selected_node_idx: i32 = queue.iter().fold(
+                0, |min_idx, x| if x.cost < queue[min_idx].cost {x} else {min_idx});
             //let selected_node = self.find_min();
             println!("Current game:");
             selected_node.print_node();
@@ -105,12 +111,13 @@ impl Node {
         println!("No solution found!");
         None
     }
+    */
 
-    pub fn print_node(&self) {
-        self.state.unwrap().print_game();
+    pub fn print(&self) {
+        self.state.unwrap().print();
         match self.state {
             Some(state) => {
-                state.print_game();
+                state.print();
                 println!("Cost: {}", state.cost);
             },
             None => println!("Dummy Node!"),
